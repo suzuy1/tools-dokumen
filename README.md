@@ -1,4 +1,4 @@
-# 🗜️ Tools Dokumen Versi Beta tahap pengembang 
+# 🗜️ Tools Dokumen Super (My-ILovePDF Clone)
 
 Sebuah aplikasi web sumber terbuka (*open-source*) 100% gratis untuk memproses, memanipulasi, dan mengonversi berbagai format dokumen secara instan. Proyek ini dibangun sebagai alternatif mandiri dari layanan berbayar seperti ILovePDF, dengan mengutamakan privasi dan arsitektur modular.
 
@@ -45,7 +45,7 @@ Proyek ini menggunakan arsitektur modular Python dengan pustaka (*libraries*) te
 
 ---
 
-## 📂 Struktur Direktori
+## 📂 Struktur DirektORI
 
 Kode aplikasi sengaja dipecah (*separation of concerns*) agar mudah dikembangkan di masa depan:
 
@@ -60,3 +60,72 @@ tools-dokumen/
 ├── requirements.txt     # Daftar pustaka Python yang dibutuhkan
 ├── packages.txt         # Ketergantungan sistem operasi (Debian/Linux)
 └── README.md            # Dokumentasi proyek
+
+```
+
+---
+
+## 💻 Cara Instalasi & Menjalankan di Lokal (Localhost)
+
+Jika Anda ingin menjalankan atau memodifikasi proyek ini di komputer lokal Anda, ikuti langkah-langkah berikut:
+
+### 1. Kloning Repositori
+
+```bash
+git clone https://github.com/suzuy1/tools-dokumen.git
+cd tools-dokumen
+
+```
+
+### 2. Instalasi Ketergantungan Sistem (Penting)
+
+Aplikasi ini membutuhkan *Ghostscript* (untuk kompresi PDF) dan *Pandoc* (untuk Markdown).
+
+* **Pengguna Linux/Ubuntu:**
+```bash
+sudo apt-get update
+sudo apt-get install ghostscript pandoc
+
+```
+
+
+* **Pengguna macOS:**
+```bash
+brew install ghostscript pandoc
+
+```
+
+
+* **Pengguna Windows:** Silakan unduh dan instal *installer* resmi [Ghostscript](https://ghostscript.com/releases/gsdnld.html) dan [Pandoc](https://pandoc.org/installing.html) lalu tambahkan ke PATH *environment variables* Anda.
+
+### 3. Instalasi Pustaka Python
+
+Sangat disarankan menggunakan *Virtual Environment* (venv).
+
+```bash
+pip install -r requirements.txt
+
+```
+
+### 4. Jalankan Aplikasi
+
+```bash
+python app.py
+
+```
+
+Aplikasi akan berjalan dan dapat diakses melalui browser di alamat: `http://127.0.0.1:7860`
+
+---
+
+## 🤝 Kontribusi
+
+Kontribusi, masalah (*issues*), dan permintaan fitur (*pull requests*) sangat diterima! Jika Anda memiliki ide untuk menambahkan alat baru (misalnya Proteksi PDF, Word ke PDF, dll), silakan *fork* repositori ini dan kirimkan kode Anda.
+
+## 📝 Lisensi
+
+Didistribusikan di bawah lisensi MIT. Anda bebas menggunakan, memodifikasi, dan mendistribusikan perangkat lunak ini secara gratis.
+
+---
+
+**Dikembangkan dengan bangga oleh:** M. Oriza Saltifa
