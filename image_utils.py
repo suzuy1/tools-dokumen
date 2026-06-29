@@ -19,8 +19,17 @@ def foto_ke_pdf(files, urutan_kustom):
             return None, "❌ Format urutan salah! Gunakan angka dipisah koma. Contoh: 2, 1, 3", file_paths
 
     # ==========================================
-    # LOGIKA REVISI: FULL FORMAT TANPA MARGIN
+    # LOGIKA REVISI: LAYOUT KERTAS A4 (ALA WORD)
     # ==========================================
+    # Ukuran standar kertas A4 Portrait dalam pixel (Resolusi tajam 150 DPI)
+    A4_LEBAR = 1240
+    A4_TINGGI = 1754
+    MARGIN = 80 # Jarak kosong di pinggir kertas/border (seperti di Word)
+    
+    # Area maksimal yang boleh diisi oleh foto setelah dikurangi margin
+    MAX_FOTO_LEBAR = A4_LEBAR - (MARGIN * 2)
+    MAX_FOTO_TINGGI = A4_TINGGI - (MARGIN * 2)
+
     pdf_pages = []
     try:
         for path in file_paths:
@@ -30,14 +39,26 @@ def foto_ke_pdf(files, urutan_kustom):
             if img.mode in ("RGBA", "P"):
                 img = img.convert("RGB")
                 
-            # Fotonya langsung dimasukkan ke dalam list tanpa media kertas tambahan
-            # Ini akan membuat halaman PDF berukuran 100% pas dengan ukuran foto (Tanpa Margin)
-            pdf_pages.append(img)
+            # Langkah A: Buat "kertas putih" kosong ukuran A4 Portrait
+            kertas_putih = Image.new("RGB", (A4_LEBAR, A4_TINGGI), "white")
+            
+            # Langkah B: Perkecil/sesuaikan foto agar pas di area cetak kertas (rasio foto tetap terjaga, tidak gepeng)
+            img.thumbnail((MAX_FOTO_LEBAR, MAX_FOTO_TINGGI), Image.Resampling.LANCZOS)
+            
+            # Langkah C: Hitung posisi koordinat X dan Y agar foto berada tepat di tengah-tengah kertas putih
+            x_pos = (A4_LEBAR - img.width) // 2
+            y_pos = (A4_TINGGI - img.height) // 2
+            
+            # Langkah D: "Tempelkan" foto tersebut ke atas kertas putih
+            kertas_putih.paste(img, (x_pos, y_pos))
+            
+            # Masukkan kertas yang sudah ada fotonya ke daftar halaman PDF
+            pdf_pages.append(kertas_putih)
             
         if pdf_pages:
-            # Simpan semua halaman foto menjadi satu file PDF utuh
+            # Simpan semua kertas putih tadi menjadi satu file PDF utuh
             pdf_pages[0].save(output_path, save_all=True, append_images=pdf_pages[1:])
-            return output_path, f"✅ Berhasil mengubah {len(pdf_pages)} foto menjadi PDF Full Format tanpa margin!", file_paths
+            return output_path, f"✅ Berhasil mengubah {len(pdf_pages)} foto menjadi PDF dengan Layout A4 standar!", file_paths
         else:
             return None, "❌ Tidak ada foto valid yang bisa diproses.", []
             
