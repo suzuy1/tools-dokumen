@@ -103,7 +103,7 @@ def pisah_pdf(input_file, rentang_halaman):
     except Exception:
         return None, f"❌ Format tidak sesuai (Gunakan format: Angka-Angka, misal 1-5)", []
 
-# 4. PDF KE WORD (REVISI PREVIEW VISUAL GALLERY)
+# 4. PDF KE WORD (REVISI MEMPERTAHANKAN FORMAT & TABEL)
 def pdf_ke_word(input_file):
     if input_file is None: 
         return None, "❌ Unggah file PDF terlebih dahulu.", []
@@ -114,22 +114,17 @@ def pdf_ke_word(input_file):
     output_path = "Hasil_Konversi_Word.docx"
     
     try:
-        import docx
+        from pdf2docx import Converter
         
-        doc = fitz.open(input_file.name)
-        word_doc = docx.Document()
-        
-        # Ekstrak teks per halaman dari PDF ke Word
-        for page in doc:
-            teks_halaman = page.get_text()
-            word_doc.add_paragraph(teks_halaman)
-            
-        word_doc.save(output_path)
+        # Proses konversi menggunakan pdf2docx untuk mempertahankan tabel dan layout
+        cv = Converter(input_file.name)
+        cv.convert(output_path, start=0, end=None)
+        cv.close()
         
         # Generate preview gambar dari PDF aslinya (Maks 10 halaman pertama untuk hemat memori)
         preview_images = generate_pdf_preview(input_file.name, max_pages=10)
             
         ukuran_awal = os.path.getsize(input_file.name) / (1024 * 1024)
-        return output_path, f"✅ Berhasil mengubah PDF ke Word!\nUkuran PDF Asli: {ukuran_awal:.2f} MB", preview_images
+        return output_path, f"✅ Berhasil mengubah PDF ke Word!\nLayout dan Tabel berhasil dipertahankan.\nUkuran Asli: {ukuran_awal:.2f} MB", preview_images
     except Exception as e:
         return None, f"❌ Gagal mengonversi PDF ke Word: {str(e)}", []
