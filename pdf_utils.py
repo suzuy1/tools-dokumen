@@ -51,7 +51,7 @@ def kompres_pdf(input_file, tingkat_kompresi):
     except Exception as e: 
         return None, f"❌ Error: {str(e)}", []
 
-# 2. GABUNG PDF (DENGAN PREVIEW)
+# 2. GABUNG PDF
 def gabung_pdf(files):
     if not files: 
         return None, "Silakan pilih minimal 2 file PDF.", []
@@ -68,13 +68,12 @@ def gabung_pdf(files):
         with open(output_path, "wb") as f:
             writer.write(f)
             
-        # Generate preview dari file hasil gabungan
         preview_images = generate_pdf_preview(output_path, max_pages=30)
         return output_path, f"✅ Berhasil menggabungkan {len(files)} file PDF!", preview_images
     except Exception as e:
         return None, f"❌ Gagal menggabungkan: {str(e)}", []
 
-# 3. PISAH PDF (DENGAN PREVIEW)
+# 3. PISAH PDF
 def pisah_pdf(input_file, rentang_halaman):
     if input_file is None: 
         return None, "Unggah file PDF terlebih dahulu.", []
@@ -99,38 +98,47 @@ def pisah_pdf(input_file, rentang_halaman):
         with open(output_path, "wb") as f:
             writer.write(f)
             
-        # Generate preview dari potongan PDF yang baru dibuat
         preview_images = generate_pdf_preview(output_path, max_pages=30)
         return output_path, f"✅ Berhasil memotong halaman {rentang_halaman} ({end_page - start_page} halaman).", preview_images
     except Exception:
         return None, f"❌ Format tidak sesuai (Gunakan format: Angka-Angka, misal 1-5)", []
 
-# Tambahkan fungsi ini di bagian PALING BAWAH file pdf_utils.py Anda
-
+# 4. PDF KE WORD (REVISI DENGAN PREVIEW TEKS)
 def pdf_ke_word(input_file):
     if input_file is None: 
-        return None, "❌ Unggah file PDF terlebih dahulu."
+        return None, "❌ Unggah file PDF terlebih dahulu.", None
         
     if not input_file.name.lower().endswith('.pdf'):
-        return None, "❌ File harus berformat .pdf"
+        return None, "❌ File harus berformat .pdf", None
         
     output_path = "Hasil_Konversi_Word.docx"
     
     try:
-        import fitz
         import docx
         
         doc = fitz.open(input_file.name)
         word_doc = docx.Document()
+        
+        teks_terkumpul = []
         
         # Ekstrak teks per halaman dari PDF ke Word
         for page in doc:
             teks_halaman = page.get_text()
             word_doc.add_paragraph(teks_halaman)
             
+            # Kumpulkan teks bersih untuk keperluan pratinjau
+            if len(teks_terkumpul) < 5 and teks_halaman.strip():
+                baris_teks = [p.strip() for p in teks_halaman.split('\n') if p.strip()]
+                teks_terkumpul.extend(baris_teks)
+            
         word_doc.save(output_path)
         
+        # Ambil 5 kalimat/paragraf pertama untuk ditampilkan di UI
+        preview_teks = "\n\n".join(teks_terkumpul[:5])
+        if not preview_teks:
+            preview_teks = "[Dokumen hasil konversi tidak memiliki teks biasa. PDF mungkin berupa gambar/hasil scan murni tanpa proses OCR]"
+            
         ukuran_awal = os.path.getsize(input_file.name) / (1024 * 1024)
-        return output_path, f"✅ Berhasil mengubah PDF ke Word!\nUkuran PDF Asli: {ukuran_awal:.2f} MB"
+        return output_path, f"✅ Berhasil mengubah PDF ke Word!\nUkuran PDF Asli: {ukuran_awal:.2f} MB", preview_teks
     except Exception as e:
-        return None, f"❌ Gagal mengonversi PDF ke Word: {str(e)}"
+        return None, f"❌ Gagal mengonversi PDF ke Word: {str(e)}", None
