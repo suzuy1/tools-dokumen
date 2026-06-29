@@ -3,3 +3,4 @@ Pillow
 PyMuPDF
 python-docx
 pypdf
+pdf2docx
