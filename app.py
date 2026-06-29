@@ -22,7 +22,8 @@ with gr.Blocks(title="Klon ILovePDF Saya", theme=gr.themes.Soft()) as app:
                 with gr.Column():
                     merge_output = gr.File(label="📥 Unduh PDF Gabungan")
                     merge_status = gr.Textbox(label="Status", interactive=False)
-            merge_btn.click(fn=gabung_pdf, inputs=[merge_input], outputs=[merge_output, merge_status])
+                    merge_preview = gr.Gallery(label="👁️ Preview Hasil Gabungan (Maks. 30 Halaman)", columns=4, height=400, object_fit="contain")
+            merge_btn.click(fn=gabung_pdf, inputs=[merge_input], outputs=[merge_output, merge_status, merge_preview])
 
         # TAB 2: PISAH PDF
         with gr.TabItem("✂️ Pisah PDF"):
@@ -35,7 +36,8 @@ with gr.Blocks(title="Klon ILovePDF Saya", theme=gr.themes.Soft()) as app:
                 with gr.Column():
                     split_output = gr.File(label="📥 Unduh Potongan PDF")
                     split_status = gr.Textbox(label="Status", interactive=False)
-            split_btn.click(fn=pisah_pdf, inputs=[split_input, split_range], outputs=[split_output, split_status])
+                    split_preview = gr.Gallery(label="👁️ Preview Hasil Potongan (Maks. 30 Halaman)", columns=4, height=400, object_fit="contain")
+            split_btn.click(fn=pisah_pdf, inputs=[split_input, split_range], outputs=[split_output, split_status, split_preview])
 
         # TAB 3: KOMPRES PDF
         with gr.TabItem("📕 Kompres PDF"):
@@ -47,7 +49,7 @@ with gr.Blocks(title="Klon ILovePDF Saya", theme=gr.themes.Soft()) as app:
                 with gr.Column():
                     pdf_output = gr.File(label="📥 Hasil PDF")
                     pdf_status = gr.Textbox(label="Status", interactive=False)
-                    pdf_preview = gr.Gallery(label="👁️ Preview Hasil (Maks. 30 Halaman)", columns=4, height=400, object_fit="contain")
+                    pdf_preview = gr.Gallery(label="👁️ Preview Hasil Kompresi (Maks. 30 Halaman)", columns=4, height=400, object_fit="contain")
             pdf_btn.click(fn=kompres_pdf, inputs=[pdf_input, pdf_opsi], outputs=[pdf_output, pdf_status, pdf_preview])
 
         # TAB 4: KOMPRES WORD
