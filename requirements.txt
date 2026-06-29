@@ -1,2 +1,4 @@
 gradio
 Pillow
+PyMuPDF
+python-docx
