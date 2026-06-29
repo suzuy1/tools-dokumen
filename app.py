@@ -1,6 +1,6 @@
 import gradio as gr
 
-# Import semua fungsi dari file modul kita
+# Import fungsi dari file modul yang sudah kita pisah
 from pdf_utils import kompres_pdf, gabung_pdf, pisah_pdf, pdf_ke_word
 from word_utils import kompres_word
 from image_utils import foto_ke_pdf
@@ -56,7 +56,7 @@ with gr.Blocks(title="Klon ILovePDF Saya", theme=gr.themes.Soft()) as app:
                     pdf_preview = gr.Gallery(label="👁️ Preview Hasil Kompresi", columns=4, height=300, object_fit="contain")
             pdf_btn.click(fn=kompres_pdf, inputs=[pdf_input, pdf_opsi], outputs=[pdf_output, pdf_status, pdf_preview])
 
-        # TAB 4: PDF TO WORD (REVISI DENGAN INPUT PREVIEW)
+        # TAB 4: PDF TO WORD
         with gr.TabItem("🔄 PDF ke Word"):
             gr.Markdown("### Ubah dokumen PDF menjadi file Word (.docx) yang bisa diedit kembali.")
             with gr.Row():
@@ -66,13 +66,17 @@ with gr.Blocks(title="Klon ILovePDF Saya", theme=gr.themes.Soft()) as app:
                 with gr.Column():
                     pdf_to_word_output = gr.File(label="📥 Unduh File Word (.docx)")
                     pdf_to_word_status = gr.Textbox(label="Status", interactive=False)
-                    # MENGGUNAKAN TEXTBOX UNTUK PREVIEW HASIL EKSTRAKSI TEKS WORD
-                    pdf_to_word_preview = gr.Textbox(label="👁️ Preview Teks Hasil Konversi (5 Paragraf Pertama)", interactive=False, lines=5)
-            pdf_to_word_btn.click(fn=pdf_ke_word, inputs=[pdf_to_word_input], outputs=[pdf_to_word_output, pdf_to_word_status, pdf_to_word_preview])
+                    pdf_to_word_preview = gr.Gallery(label="👁️ Preview Visual Dokumen", columns=4, height=300, object_fit="contain")
+            
+            pdf_to_word_btn.click(
+                fn=pdf_ke_word, 
+                inputs=[pdf_to_word_input], 
+                outputs=[pdf_to_word_output, pdf_to_word_status, pdf_to_word_preview]
+            )
 
         # TAB 5: FOTO TO PDF + CUSTOM ORDER
         with gr.TabItem("🖼️ Foto ke PDF"):
-            gr.Markdown("### Ubah kumpulan foto menjadi satu file PDF. Anda bisa mengatur urutan halaman lewat kolom di bawah.")
+            gr.Markdown("### Ubah kumpulan foto menjadi satu file PDF dengan susunan rapi.")
             with gr.Row():
                 with gr.Column():
                     img_input = gr.File(label="Pilih atau Tarik Foto (Bisa Banyak Sekaligus)", file_count="multiple", file_types=[".jpg", ".jpeg", ".png"])
