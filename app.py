@@ -4,17 +4,20 @@ import os
 import zipfile
 import tempfile
 import shutil
+import io
 from PIL import Image
+import fitz  # Library PyMuPDF untuk preview PDF
+import docx  # Library python-docx untuk preview Word
 
 # ==========================================
-# FUNGSI 1: KOMPRES PDF
+# FUNGSI 1: KOMPRES & PREVIEW PDF
 # ==========================================
 def kompres_pdf(input_file, tingkat_kompresi):
     if input_file is None:
-        return None, "Silakan unggah file PDF terlebih dahulu."
+        return None, "Silakan unggah file PDF terlebih dahulu.", None
     
     if not input_file.name.lower().endswith('.pdf'):
-        return None, "Maaf, ini tab khusus PDF. Gunakan tab Word untuk file .docx"
+        return None, "Maaf, ini tab khusus PDF. Gunakan tab Word untuk file .docx", None
 
     input_path = input_file.name
     output_path = "hasil_kompresi.pdf"
@@ -26,13 +29,11 @@ def kompres_pdf(input_file, tingkat_kompresi):
         "Bagus (Kualitas Prepress)": '/prepress'
     }
     
-    kualitas_gs = kualitas_map[tingkat_kompresi]
-    
     perintah_gs = [
         "gs",
         "-sDEVICE=pdfwrite",
         "-dCompatibilityLevel=1.4",
-        f"-dPDFSETTINGS={kualitas_gs}",
+        f"-dPDFSETTINGS={kualitas_map[tingkat_kompresi]}",
         "-dNOPAUSE",
         "-dQUIET",
         "-dBATCH",
@@ -41,23 +42,36 @@ def kompres_pdf(input_file, tingkat_kompresi):
     ]
     
     try:
+        # Proses Kompresi
         subprocess.run(perintah_gs, check=True)
+        
+        # PROSES PREVIEW: Render Halaman Pertama PDF jadi Gambar
+        try:
+            doc = fitz.open(output_path)
+            page = doc.load_page(0) # Ambil halaman 1
+            pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5)) # Zoom sedikit agar tidak buram
+            img_data = pix.tobytes("png")
+            preview_img = Image.open(io.BytesIO(img_data))
+        except Exception:
+            preview_img = None # Jika gagal generate preview, biarkan kosong
+
         ukuran_awal = os.path.getsize(input_path) / (1024 * 1024)
         ukuran_akhir = os.path.getsize(output_path) / (1024 * 1024)
         pesan = f"✅ Sukses!\nUkuran Awal: {ukuran_awal:.2f} MB ➡️ Ukuran Akhir: {ukuran_akhir:.2f} MB"
-        return output_path, pesan
+        
+        return output_path, pesan, preview_img
     except Exception as e:
-        return None, f"❌ Terjadi kesalahan: {str(e)}"
+        return None, f"❌ Terjadi kesalahan: {str(e)}", None
 
 # ==========================================
-# FUNGSI 2: KOMPRES WORD (.DOCX)
+# FUNGSI 2: KOMPRES & PREVIEW WORD (.DOCX)
 # ==========================================
 def kompres_word(input_file, tingkat_kompresi):
     if input_file is None:
-        return None, "Silakan unggah file Word (.docx) terlebih dahulu."
+        return None, "Silakan unggah file Word (.docx) terlebih dahulu.", None
     
     if not input_file.name.lower().endswith('.docx'):
-        return None, "Maaf, ini tab khusus Word. Gunakan tab PDF untuk file .pdf"
+        return None, "Maaf, ini tab khusus Word. Gunakan tab PDF untuk file .pdf", None
 
     input_path = input_file.name
     output_path = "hasil_kompresi.docx"
@@ -73,15 +87,14 @@ def kompres_word(input_file, tingkat_kompresi):
     gambar_diproses = 0
     
     try:
+        # Proses Kompresi Gambar dalam Word
         with zipfile.ZipFile(input_path, 'r') as zip_ref:
             zip_ref.extractall(temp_dir)
             
         media_path = os.path.join(temp_dir, 'word', 'media')
-        
         if os.path.exists(media_path):
             for filename in os.listdir(media_path):
                 file_path = os.path.join(media_path, filename)
-                
                 if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
                     try:
                         img = Image.open(file_path)
@@ -94,7 +107,6 @@ def kompres_word(input_file, tingkat_kompresi):
                             img.save(file_path, "JPEG", optimize=True, quality=kualitas_jpeg)
                         elif filename.lower().endswith('.png'):
                             img.save(file_path, "PNG", optimize=True)
-                            
                         gambar_diproses += 1
                     except Exception:
                         pass
@@ -106,20 +118,35 @@ def kompres_word(input_file, tingkat_kompresi):
                     rel_path = os.path.relpath(full_path, temp_dir)
                     docx_zip.write(full_path, rel_path)
                     
+        # PROSES PREVIEW: Ekstrak Teks dari Word
+        try:
+            doc_obj = docx.Document(output_path)
+            teks_terkumpul = []
+            for p in doc_obj.paragraphs:
+                if p.text.strip(): # Abaikan paragraf kosong
+                    teks_terkumpul.append(p.text.strip())
+                if len(teks_terkumpul) >= 3: # Ambil 3 paragraf pertama saja
+                    break
+            preview_teks = "\n\n".join(teks_terkumpul)
+            if not preview_teks:
+                preview_teks = "[Dokumen ini hanya berisi gambar/tabel, tidak ada teks biasa]"
+        except Exception:
+            preview_teks = "[Tidak dapat memuat preview teks]"
+                    
         ukuran_awal = os.path.getsize(input_path) / (1024 * 1024)
         ukuran_akhir = os.path.getsize(output_path) / (1024 * 1024)
-        
         pesan = (f"✅ Sukses! {gambar_diproses} gambar dikompres.\n"
                  f"Ukuran Awal: {ukuran_awal:.2f} MB ➡️ Ukuran Akhir: {ukuran_akhir:.2f} MB")
-        return output_path, pesan
+                 
+        return output_path, pesan, preview_teks
         
     except Exception as e:
-        return None, f"❌ Terjadi kesalahan: {str(e)}"
+        return None, f"❌ Terjadi kesalahan: {str(e)}", None
     finally:
         shutil.rmtree(temp_dir)
 
 # ==========================================
-# ANTARMUKA PENGGUNA (UI) DENGAN TAB
+# ANTARMUKA PENGGUNA (UI) DENGAN PREVIEW
 # ==========================================
 with gr.Blocks(title="Alat Kompresi Gratis", theme=gr.themes.Soft()) as app:
     gr.Markdown("# 🗜️ Alat Kompresi Dokumen Super (100% Gratis)")
@@ -143,10 +170,15 @@ with gr.Blocks(title="Alat Kompresi Gratis", theme=gr.themes.Soft()) as app:
                     )
                     pdf_btn = gr.Button("Kompres PDF Sekarang!", variant="primary")
                 with gr.Column():
-                    pdf_output = gr.File(label="Hasil PDF (Siap Diunduh)")
+                    pdf_output = gr.File(label="📥 Hasil PDF (Siap Diunduh)")
                     pdf_status = gr.Textbox(label="Status", interactive=False, lines=2)
+                    pdf_preview = gr.Image(label="👁️ Preview Halaman 1", type="pil")
             
-            pdf_btn.click(fn=kompres_pdf, inputs=[pdf_input, pdf_opsi], outputs=[pdf_output, pdf_status])
+            pdf_btn.click(
+                fn=kompres_pdf, 
+                inputs=[pdf_input, pdf_opsi], 
+                outputs=[pdf_output, pdf_status, pdf_preview]
+            )
 
         # TAB 2: WORD
         with gr.TabItem("📘 Kompres Word (.docx)"):
@@ -164,9 +196,14 @@ with gr.Blocks(title="Alat Kompresi Gratis", theme=gr.themes.Soft()) as app:
                     )
                     word_btn = gr.Button("Kompres Word Sekarang!", variant="primary")
                 with gr.Column():
-                    word_output = gr.File(label="Hasil Word (Siap Diunduh)")
+                    word_output = gr.File(label="📥 Hasil Word (Siap Diunduh)")
                     word_status = gr.Textbox(label="Status", interactive=False, lines=2)
+                    word_preview = gr.Textbox(label="👁️ Preview Teks Word (3 Paragraf Pertama)", interactive=False, lines=5)
             
-            word_btn.click(fn=kompres_word, inputs=[word_input, word_opsi], outputs=[word_output, word_status])
+            word_btn.click(
+                fn=kompres_word, 
+                inputs=[word_input, word_opsi], 
+                outputs=[word_output, word_status, word_preview]
+            )
 
 app.launch()
