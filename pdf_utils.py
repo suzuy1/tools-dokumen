@@ -3,7 +3,7 @@ import subprocess
 import io
 from PIL import Image
 import fitz  # PyMuPDF
-from pypdf import PdfMerger, PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter # PdfMerger dihapus, kita hanya pakai PdfWriter
 
 def kompres_pdf(input_file, tingkat_kompresi):
     if input_file is None: 
@@ -52,13 +52,15 @@ def gabung_pdf(files):
         return None, "Pilih minimal 2 file untuk digabungkan!"
     
     output_path = "PDF_Gabungan_Selesai.pdf"
-    merger = PdfMerger()
+    writer = PdfWriter() # Menggunakan PdfWriter sebagai pengganti fungsi gabung
     
     try:
         for file in files:
-            merger.append(file.name)
-        merger.write(output_path)
-        merger.close()
+            writer.append(file.name) # .append() sekarang ada di PdfWriter
+            
+        with open(output_path, "wb") as f:
+            writer.write(f)
+            
         return output_path, f"✅ Berhasil menggabungkan {len(files)} file PDF!"
     except Exception as e:
         return None, f"❌ Gagal menggabungkan: {str(e)}"
