@@ -4,6 +4,7 @@ import gradio as gr
 from pdf_utils import kompres_pdf, gabung_pdf, pisah_pdf, pdf_ke_word
 from word_utils import kompres_word
 from image_utils import foto_ke_pdf
+from md_utils import md_ke_word  # <--- TAMBAHAN BARU
 
 # Fungsi perantara untuk menampilkan pratinjau foto instan saat di-upload
 def update_galeri_foto(files):
@@ -106,5 +107,23 @@ with gr.Blocks(title="Klon ILovePDF Saya", theme=gr.themes.Soft()) as app:
                     word_status = gr.Textbox(label="Status", interactive=False)
                     word_preview = gr.Textbox(label="👁️ Preview Teks", interactive=False, lines=5)
             word_btn.click(fn=kompres_word, inputs=[word_input, word_opsi], outputs=[word_output, word_status, word_preview])
+
+        # TAB 7: MD TO WORD (BARU)
+        with gr.TabItem("📝 MD ke Word"):
+            gr.Markdown("### Ubah file Markdown (.md) menjadi dokumen Word (.docx) lengkap dengan format aslinya.")
+            with gr.Row():
+                with gr.Column():
+                    md_input = gr.File(label="Unggah File Markdown (.md)", file_types=[".md"])
+                    md_btn = gr.Button("Konversi MD ke Word!", variant="primary")
+                with gr.Column():
+                    md_output = gr.File(label="📥 Unduh File Word (.docx)")
+                    md_status = gr.Textbox(label="Status", interactive=False)
+                    md_preview = gr.Textbox(label="👁️ Preview Teks (5 Baris Pertama)", interactive=False, lines=5)
+            
+            md_btn.click(
+                fn=md_ke_word, 
+                inputs=[md_input], 
+                outputs=[md_output, md_status, md_preview]
+            )
 
 app.launch()
