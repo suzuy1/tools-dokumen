@@ -103,13 +103,13 @@ def pisah_pdf(input_file, rentang_halaman):
     except Exception:
         return None, f"❌ Format tidak sesuai (Gunakan format: Angka-Angka, misal 1-5)", []
 
-# 4. PDF KE WORD (REVISI DENGAN PREVIEW TEKS)
+# 4. PDF KE WORD (REVISI PREVIEW VISUAL GALLERY)
 def pdf_ke_word(input_file):
     if input_file is None: 
-        return None, "❌ Unggah file PDF terlebih dahulu.", None
+        return None, "❌ Unggah file PDF terlebih dahulu.", []
         
     if not input_file.name.lower().endswith('.pdf'):
-        return None, "❌ File harus berformat .pdf", None
+        return None, "❌ File harus berformat .pdf", []
         
     output_path = "Hasil_Konversi_Word.docx"
     
@@ -119,26 +119,17 @@ def pdf_ke_word(input_file):
         doc = fitz.open(input_file.name)
         word_doc = docx.Document()
         
-        teks_terkumpul = []
-        
         # Ekstrak teks per halaman dari PDF ke Word
         for page in doc:
             teks_halaman = page.get_text()
             word_doc.add_paragraph(teks_halaman)
             
-            # Kumpulkan teks bersih untuk keperluan pratinjau
-            if len(teks_terkumpul) < 5 and teks_halaman.strip():
-                baris_teks = [p.strip() for p in teks_halaman.split('\n') if p.strip()]
-                teks_terkumpul.extend(baris_teks)
-            
         word_doc.save(output_path)
         
-        # Ambil 5 kalimat/paragraf pertama untuk ditampilkan di UI
-        preview_teks = "\n\n".join(teks_terkumpul[:5])
-        if not preview_teks:
-            preview_teks = "[Dokumen hasil konversi tidak memiliki teks biasa. PDF mungkin berupa gambar/hasil scan murni tanpa proses OCR]"
+        # Generate preview gambar dari PDF aslinya (Maks 10 halaman pertama untuk hemat memori)
+        preview_images = generate_pdf_preview(input_file.name, max_pages=10)
             
         ukuran_awal = os.path.getsize(input_file.name) / (1024 * 1024)
-        return output_path, f"✅ Berhasil mengubah PDF ke Word!\nUkuran PDF Asli: {ukuran_awal:.2f} MB", preview_teks
+        return output_path, f"✅ Berhasil mengubah PDF ke Word!\nUkuran PDF Asli: {ukuran_awal:.2f} MB", preview_images
     except Exception as e:
-        return None, f"❌ Gagal mengonversi PDF ke Word: {str(e)}", None
+        return None, f"❌ Gagal mengonversi PDF ke Word: {str(e)}", []
