@@ -4,3 +4,4 @@ PyMuPDF
 python-docx
 pypdf
 pdf2docx
+pypandoc
