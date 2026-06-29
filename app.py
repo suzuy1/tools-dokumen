@@ -10,14 +10,14 @@ import fitz  # Library PyMuPDF untuk preview PDF
 import docx  # Library python-docx untuk preview Word
 
 # ==========================================
-# FUNGSI 1: KOMPRES & PREVIEW PDF
+# FUNGSI 1: KOMPRES & PREVIEW PDF (SEMUA HALAMAN)
 # ==========================================
 def kompres_pdf(input_file, tingkat_kompresi):
     if input_file is None:
-        return None, "Silakan unggah file PDF terlebih dahulu.", None
+        return None, "Silakan unggah file PDF terlebih dahulu.", []
     
     if not input_file.name.lower().endswith('.pdf'):
-        return None, "Maaf, ini tab khusus PDF. Gunakan tab Word untuk file .docx", None
+        return None, "Maaf, ini tab khusus PDF. Gunakan tab Word untuk file .docx", []
 
     input_path = input_file.name
     output_path = "hasil_kompresi.pdf"
@@ -42,26 +42,35 @@ def kompres_pdf(input_file, tingkat_kompresi):
     ]
     
     try:
-        # Proses Kompresi
+        # 1. Jalankan Proses Kompresi
         subprocess.run(perintah_gs, check=True)
         
-        # PROSES PREVIEW: Render Halaman Pertama PDF jadi Gambar
+        # 2. PROSES PREVIEW: Render Semua Halaman ke Galeri
+        preview_images = []
         try:
             doc = fitz.open(output_path)
-            page = doc.load_page(0) # Ambil halaman 1
-            pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5)) # Zoom sedikit agar tidak buram
-            img_data = pix.tobytes("png")
-            preview_img = Image.open(io.BytesIO(img_data))
-        except Exception:
-            preview_img = None # Jika gagal generate preview, biarkan kosong
+            # Batasi preview max 50 halaman agar server gratis tidak crash
+            max_pages = min(len(doc), 50) 
+            
+            for i in range(max_pages):
+                page = doc.load_page(i)
+                # Matrix 1.0 cukup untuk preview galeri agar prosesnya cepat
+                pix = page.get_pixmap(matrix=fitz.Matrix(1.0, 1.0)) 
+                img_data = pix.tobytes("png")
+                img = Image.open(io.BytesIO(img_data))
+                preview_images.append(img)
+        except Exception as e:
+            print(f"Gagal memuat preview PDF: {e}")
+            preview_images = [] # Kosongkan jika gagal
 
+        # 3. Kalkulasi Ukuran
         ukuran_awal = os.path.getsize(input_path) / (1024 * 1024)
         ukuran_akhir = os.path.getsize(output_path) / (1024 * 1024)
         pesan = f"✅ Sukses!\nUkuran Awal: {ukuran_awal:.2f} MB ➡️ Ukuran Akhir: {ukuran_akhir:.2f} MB"
         
-        return output_path, pesan, preview_img
+        return output_path, pesan, preview_images
     except Exception as e:
-        return None, f"❌ Terjadi kesalahan: {str(e)}", None
+        return None, f"❌ Terjadi kesalahan: {str(e)}", []
 
 # ==========================================
 # FUNGSI 2: KOMPRES & PREVIEW WORD (.DOCX)
@@ -125,7 +134,7 @@ def kompres_word(input_file, tingkat_kompresi):
             for p in doc_obj.paragraphs:
                 if p.text.strip(): # Abaikan paragraf kosong
                     teks_terkumpul.append(p.text.strip())
-                if len(teks_terkumpul) >= 3: # Ambil 3 paragraf pertama saja
+                if len(teks_terkumpul) >= 5: # Ambil 5 paragraf pertama
                     break
             preview_teks = "\n\n".join(teks_terkumpul)
             if not preview_teks:
@@ -172,7 +181,13 @@ with gr.Blocks(title="Alat Kompresi Gratis", theme=gr.themes.Soft()) as app:
                 with gr.Column():
                     pdf_output = gr.File(label="📥 Hasil PDF (Siap Diunduh)")
                     pdf_status = gr.Textbox(label="Status", interactive=False, lines=2)
-                    pdf_preview = gr.Image(label="👁️ Preview Halaman 1", type="pil")
+                    # MENGGUNAKAN GALLERY UNTUK SEMUA HALAMAN
+                    pdf_preview = gr.Gallery(
+                        label="👁️ Preview Dokumen (Maks. 50 Halaman)", 
+                        columns=3, # Ditampilkan 3 ke samping agar rapi
+                        height=500, # Tinggi kotak galeri
+                        object_fit="contain"
+                    )
             
             pdf_btn.click(
                 fn=kompres_pdf, 
@@ -198,7 +213,7 @@ with gr.Blocks(title="Alat Kompresi Gratis", theme=gr.themes.Soft()) as app:
                 with gr.Column():
                     word_output = gr.File(label="📥 Hasil Word (Siap Diunduh)")
                     word_status = gr.Textbox(label="Status", interactive=False, lines=2)
-                    word_preview = gr.Textbox(label="👁️ Preview Teks Word (3 Paragraf Pertama)", interactive=False, lines=5)
+                    word_preview = gr.Textbox(label="👁️ Preview Teks Word (5 Paragraf Pertama)", interactive=False, lines=6)
             
             word_btn.click(
                 fn=kompres_word, 
