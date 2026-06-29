@@ -56,7 +56,7 @@ with gr.Blocks(title="Klon ILovePDF Saya", theme=gr.themes.Soft()) as app:
                     pdf_preview = gr.Gallery(label="👁️ Preview Hasil Kompresi", columns=4, height=300, object_fit="contain")
             pdf_btn.click(fn=kompres_pdf, inputs=[pdf_input, pdf_opsi], outputs=[pdf_output, pdf_status, pdf_preview])
 
-        # TAB 4: PDF TO WORD (BARU)
+        # TAB 4: PDF TO WORD (REVISI DENGAN INPUT PREVIEW)
         with gr.TabItem("🔄 PDF ke Word"):
             gr.Markdown("### Ubah dokumen PDF menjadi file Word (.docx) yang bisa diedit kembali.")
             with gr.Row():
@@ -66,9 +66,11 @@ with gr.Blocks(title="Klon ILovePDF Saya", theme=gr.themes.Soft()) as app:
                 with gr.Column():
                     pdf_to_word_output = gr.File(label="📥 Unduh File Word (.docx)")
                     pdf_to_word_status = gr.Textbox(label="Status", interactive=False)
-            pdf_to_word_btn.click(fn=pdf_ke_word, inputs=[pdf_to_word_input], outputs=[pdf_to_word_output, pdf_to_word_status])
+                    # MENGGUNAKAN TEXTBOX UNTUK PREVIEW HASIL EKSTRAKSI TEKS WORD
+                    pdf_to_word_preview = gr.Textbox(label="👁️ Preview Teks Hasil Konversi (5 Paragraf Pertama)", interactive=False, lines=5)
+            pdf_to_word_btn.click(fn=pdf_ke_word, inputs=[pdf_to_word_input], outputs=[pdf_to_word_output, pdf_to_word_status, pdf_to_word_preview])
 
-        # TAB 5: FOTO TO PDF + CUSTOM ORDER (BARU)
+        # TAB 5: FOTO TO PDF + CUSTOM ORDER
         with gr.TabItem("🖼️ Foto ke PDF"):
             gr.Markdown("### Ubah kumpulan foto menjadi satu file PDF. Anda bisa mengatur urutan halaman lewat kolom di bawah.")
             with gr.Row():
@@ -76,7 +78,7 @@ with gr.Blocks(title="Klon ILovePDF Saya", theme=gr.themes.Soft()) as app:
                     img_input = gr.File(label="Pilih atau Tarik Foto (Bisa Banyak Sekaligus)", file_count="multiple", file_types=[".jpg", ".jpeg", ".png"])
                     img_order = gr.Textbox(
                         label="✍️ Atur Urutan Halaman (Opsional)", 
-                        placeholder="Contoh: 2, 1 (artinya Foto ke-2 jadi halaman 1, Foto ke-1 jadi halaman 2)",
+                        placeholder="Contoh: 2, 1",
                         info="Biarkan kosong jika urutan foto di galeri pratinjau sudah benar."
                     )
                     img_btn = gr.Button("Konversi Foto ke PDF!", variant="primary")
@@ -85,7 +87,6 @@ with gr.Blocks(title="Klon ILovePDF Saya", theme=gr.themes.Soft()) as app:
                     img_status = gr.Textbox(label="Status", interactive=False)
                     img_preview = gr.Gallery(label="👁️ Galeri Urutan Foto (Cek nomor urutannya di sini)", columns=3, height=300, object_fit="contain")
             
-            # Munculkan pratinjau foto secara otomatis di galeri begitu user selesai memilih file
             img_input.change(fn=update_galeri_foto, inputs=[img_input], outputs=[img_preview])
             img_btn.click(fn=foto_ke_pdf, inputs=[img_input, img_order], outputs=[img_output, img_status, img_preview])
 
