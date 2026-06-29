@@ -104,3 +104,33 @@ def pisah_pdf(input_file, rentang_halaman):
         return output_path, f"✅ Berhasil memotong halaman {rentang_halaman} ({end_page - start_page} halaman).", preview_images
     except Exception:
         return None, f"❌ Format tidak sesuai (Gunakan format: Angka-Angka, misal 1-5)", []
+
+# Tambahkan fungsi ini di bagian PALING BAWAH file pdf_utils.py Anda
+
+def pdf_ke_word(input_file):
+    if input_file is None: 
+        return None, "❌ Unggah file PDF terlebih dahulu."
+        
+    if not input_file.name.lower().endswith('.pdf'):
+        return None, "❌ File harus berformat .pdf"
+        
+    output_path = "Hasil_Konversi_Word.docx"
+    
+    try:
+        import fitz
+        import docx
+        
+        doc = fitz.open(input_file.name)
+        word_doc = docx.Document()
+        
+        # Ekstrak teks per halaman dari PDF ke Word
+        for page in doc:
+            teks_halaman = page.get_text()
+            word_doc.add_paragraph(teks_halaman)
+            
+        word_doc.save(output_path)
+        
+        ukuran_awal = os.path.getsize(input_file.name) / (1024 * 1024)
+        return output_path, f"✅ Berhasil mengubah PDF ke Word!\nUkuran PDF Asli: {ukuran_awal:.2f} MB"
+    except Exception as e:
+        return None, f"❌ Gagal mengonversi PDF ke Word: {str(e)}"
